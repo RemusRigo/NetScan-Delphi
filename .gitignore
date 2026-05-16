@@ -1,0 +1,24 @@
+#------------------------------------------------
+# © 2026 Remus Rigo
+#    2026-05-16
+#------------------------------------------------
+
+#My ignored files
+~Backup~
+~ToDo~
+ToDo.txt
+Upload.bat
+Upload.ps1
+Update.bat
+
+#Delphi specific files & folders
+[Bb]in
+[Oo]bj
+__history
+__recovery
+*.dproj.local
+*.dsk
+*.dsv
+*.groupproj.local
+*.identcache
+*.tvsconfig
