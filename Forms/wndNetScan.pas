@@ -13,7 +13,7 @@ uses
    Winapi.Windows, Winapi.Messages, Winapi.WinSock2,
    System.SysUtils, System.Variants, System.Classes, System.Threading,
    Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls, System.ImageList, Vcl.ImgList,
-  Vcl.Menus;
+   Vcl.Menus;
 
 type
    TfrmNetScan = class(TForm)
@@ -23,7 +23,12 @@ type
       imgListStatus: TImageList;
       btnScan: TButton;
     procedure btnScanClick(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     private
+      isScanning: Boolean;
+      appExit: Boolean;
+      bkTask: ITask;
+      procedure AutosizeListViewColumns(lv: TListView);
       function PingIP(const AIP: string): Boolean;
    public
 end;
@@ -38,6 +43,21 @@ implementation
 uses
    iphlpapi_dll;
 
+//-------------------------------------------------------------------------------------------------
+// AutosizeListViewColumns
+procedure TfrmNetScan.AutosizeListViewColumns(lv: TListView);
+begin
+   lv.Items.BeginUpdate;
+   try
+      for var i := 0 to lv.Columns.Count - 1 do
+         lv.Columns[i].Width := -1 // -1 autosizes based on the content of the items
+   finally
+      lv.Items.EndUpdate;
+   end;
+end;
+
+//-------------------------------------------------------------------------------------------------
+// PingIP
 function TfrmNetScan.PingIP(const AIP: string): Boolean;
 var
    IcmpHandle: THandle;
@@ -68,11 +88,16 @@ begin
    end;
 end;
 
+//-------------------------------------------------------------------------------------------------
+// btnScan onClick
 procedure TfrmNetScan.btnScanClick(Sender: TObject);
 const
    IP_BASE = '192.168.100.';
 begin
-   BtnScan.Enabled := False;
+   isScanning:=True;
+   appExit:=False;
+   BtnScan.Enabled:=False;
+   AutosizeListViewColumns(lvNetScan);
 
    // Pre-populate the ListView to avoid UI creation conflicts across threads
    lvNetScan.Items.BeginUpdate;
@@ -100,10 +125,13 @@ begin
          begin
             CurrentIP:=IP_BASE + Index.ToString;
             IsOnline:=PingIP(CurrentIP);
+            if appExit then Exit;
 
             //  Update the UI safely from the main thread
             TThread.Queue(nil, procedure
             begin
+               if appExit then Exit;
+
                // ListView is 0-indexed, so Index 1 maps to lvNetScan.Items[0]
                if (Index - 1 < lvNetScan.Items.Count) then
                begin
@@ -122,12 +150,48 @@ begin
             end);
          end);
 
-      // Re-enable the button when entire parallel loop finishes
+      // cleanup / parallel loop finishes
       TThread.Queue(nil, procedure
       begin
-         BtnScan.Enabled:=True;
+         isScanning:=False;
+         if Not appExit then
+         begin
+            btnScan.Enabled:=True;
+            AutosizeListViewColumns(lvNetScan);
+         end;
       end);
    end);
+end;
+
+//-------------------------------------------------------------------------------------------------
+// frmNetScan onCloseQuesy
+procedure TfrmNetScan.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+   // If no scan is running, let the app close instantly
+   if not isScanning then
+   begin
+      CanClose:=True;
+      Exit;
+   end;
+
+   // Stymie the closure for a brief moment
+   CanClose:=False;
+   appExit:= True; // Signal all background threads to drop what they are doing
+
+   // Wait safely for the outer task to reach a full stop.
+   // Because TParallel.For stops very fast when signaled, this takes milliseconds.
+   if Assigned(bkTask) then
+   begin
+      // ProcessMessages keeps the UI alive during the brief wait loop
+      while isScanning do
+      begin
+         Application.ProcessMessages;
+         Sleep(10);
+      end;
+   end;
+
+   // Everything is cleanly stopped. It is now safe to close.
+   CanClose:=True;
 end;
 
 end.

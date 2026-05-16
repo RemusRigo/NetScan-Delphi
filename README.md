@@ -29,9 +29,13 @@ Just run NetScan.exe
 
 
 
+
+
+
+
 ## Roadmap
 
 * 2026-05-16: Fix: About form
-* 2026-05-16: ICO: easypass by Papirus Development Team https://icon-icons.com/icon/easypass/94927
+* 2026-05-16: Add: Online/Offline buttons
 * 2026-05-16: Project started \[Delphi version]
 
