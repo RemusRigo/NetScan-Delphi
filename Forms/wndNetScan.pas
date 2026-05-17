@@ -44,6 +44,12 @@ type
       pnlOptions             : TPanel;
       lvNetScan              : TListView;
       btnScan                : TButton;
+    edByte1: TEdit;
+    edByte2: TEdit;
+    edByte3: TEdit;
+    edByte4: TEdit;
+    edByteTo: TEdit;
+    lblTo: TLabel;
       procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
       procedure FormCreate(Sender: TObject);
       procedure btnScanClick(Sender: TObject);
@@ -84,6 +90,7 @@ implementation
 {$R *.dfm}
 
 uses
+   StrUtils,
    iphlpapi_dll,
    appData,
    wndAbout;
@@ -423,7 +430,7 @@ end;
 // btnScan onClick
 procedure TfrmNetScan.btnScanClick(Sender: TObject);
 begin
-   ScanRange('192.168.100', 1, 255);
+   ScanRange(edByte1.Text+'.'+edByte2.Text+'.'+edByte3.Text, StrToInt(edByte4.Text), StrToInt(edByteTO.Text));
 end;
 
 procedure TfrmNetScan.cbViewChange(Sender: TObject);

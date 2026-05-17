@@ -205,6 +205,13 @@ object frmNetScan: TfrmNetScan
     DesignSize = (
       297
       392)
+    object lblTo: TLabel
+      Left = 158
+      Top = 9
+      Width = 5
+      Height = 15
+      Caption = '-'
+    end
     object btnScan: TButton
       Left = 214
       Top = 359
@@ -215,6 +222,46 @@ object frmNetScan: TfrmNetScan
       TabOrder = 0
       OnClick = btnScanClick
       ExplicitTop = 388
+    end
+    object edByte1: TEdit
+      Left = 2
+      Top = 6
+      Width = 33
+      Height = 23
+      Hint = '192'
+      TabOrder = 1
+    end
+    object edByte2: TEdit
+      Left = 41
+      Top = 6
+      Width = 33
+      Height = 23
+      Hint = '168'
+      TabOrder = 2
+    end
+    object edByte3: TEdit
+      Left = 80
+      Top = 6
+      Width = 33
+      Height = 23
+      Hint = '0'
+      TabOrder = 3
+    end
+    object edByte4: TEdit
+      Left = 119
+      Top = 6
+      Width = 33
+      Height = 23
+      Hint = '1'
+      TabOrder = 4
+    end
+    object edByteTo: TEdit
+      Left = 169
+      Top = 6
+      Width = 33
+      Height = 23
+      Hint = '255'
+      TabOrder = 5
     end
   end
   object ToolBar1: TToolBar
