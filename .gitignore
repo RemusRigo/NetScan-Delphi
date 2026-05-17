@@ -10,6 +10,7 @@ ToDo.txt
 Upload.bat
 Upload.ps1
 Update.bat
+*.psd
 
 #Delphi specific files & folders
 [Bb]in

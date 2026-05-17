@@ -35,6 +35,7 @@ Just run NetScan.exe
 
 ## Roadmap
 
+* 2026-05-17: Add: Retrieve HostName and MAC for the active IP's
 * 2026-05-16: Fix: About form
 * 2026-05-16: Add: Online/Offline buttons
 * 2026-05-16: Project started \[Delphi version]

@@ -1,13 +1,12 @@
-//--------------------------------------------------------------------------------------------------
-// NetScan
+//-------------------------------------------------------------------------------------------------
+// IPHlpAPI.dll
 //    © 2026 Remus Rigo
-//       v1.0 2026-05-16
-// Main form
-//--------------------------------------------------------------------------------------------------
+//       v1.0 2026-05-17
+//-------------------------------------------------------------------------------------------------
 
 unit iphlpapi_dll;
 
-interface
+interface //---------------------------------------------------------------------------------------
 
 uses
   Winapi.Windows;
@@ -46,8 +45,9 @@ function IcmpSendEcho(
    Timeout: DWORD
 ): DWORD; stdcall;
 
+function SendARP(DestIP: DWORD; SrcIP: DWORD; pMacAddr: Pointer; var PhyAddrLen: DWORD): DWORD; stdcall;
 
-implementation
+implementation //----------------------------------------------------------------------------------
 
 function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll' name 'IcmpCreateFile';
 
@@ -63,5 +63,7 @@ function IcmpSendEcho(
    ReplySize: DWORD;
    Timeout: DWORD
 ): DWORD; stdcall; external 'iphlpapi.dll' name 'IcmpSendEcho';
+
+function SendARP; external 'iphlpapi.dll' name 'SendARP';
 
 end.

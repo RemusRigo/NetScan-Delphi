@@ -8,9 +8,12 @@
 program NetScan;
 
 uses
-   Vcl.Forms,
-   iphlpapi_dll in 'API\iphlpapi_dll.pas',
-   wndNetScan in 'Forms\wndNetScan.pas' {frmNetScan};
+  Vcl.Forms,
+  iphlpapi_dll in 'API\iphlpapi_dll.pas',
+  wndNetScan in 'Forms\wndNetScan.pas' {frmNetScan},
+  wndAbout in 'Forms\wndAbout.pas' {frmAbout},
+  AppData in 'Units\AppData.pas',
+  PercentProgressBar in 'Classes\PercentProgressBar.pas';
 
 {$R *.res}
 
@@ -18,5 +21,6 @@ begin
    Application.Initialize;
    Application.MainFormOnTaskbar := True;
    Application.CreateForm(TfrmNetScan, frmNetScan);
-   Application.Run;
+  Application.CreateForm(TfrmAbout, frmAbout);
+  Application.Run;
 end.
