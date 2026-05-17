@@ -154,23 +154,22 @@ object frmNetScan: TfrmNetScan
   TextHeight = 15
   object pnlView: TPanel
     Left = 0
-    Top = 0
+    Top = 29
     Width = 483
-    Height = 421
+    Height = 392
     Align = alLeft
-    Anchors = [akLeft, akTop, akRight, akBottom]
     Caption = 'pnlView'
     TabOrder = 0
-    ExplicitWidth = 872
-    ExplicitHeight = 610
+    ExplicitTop = 40
+    ExplicitHeight = 381
     DesignSize = (
       483
-      421)
+      392)
     object lvNetScan: TListView
       Left = 0
       Top = 0
       Width = 481
-      Height = 393
+      Height = 358
       Anchors = [akLeft, akTop, akRight, akBottom]
       Columns = <
         item
@@ -196,27 +195,56 @@ object frmNetScan: TfrmNetScan
   end
   object pnlOptions: TPanel
     Left = 487
-    Top = 0
+    Top = 29
     Width = 297
-    Height = 421
+    Height = 392
     Align = alRight
     TabOrder = 1
-    ExplicitLeft = 824
-    ExplicitTop = 112
-    ExplicitHeight = 249
+    ExplicitTop = 24
+    ExplicitHeight = 397
     DesignSize = (
       297
-      421)
+      392)
     object btnScan: TButton
       Left = 214
-      Top = 388
+      Top = 359
       Width = 75
       Height = 25
       Anchors = [akRight, akBottom]
       Caption = '&Scan'
       TabOrder = 0
       OnClick = btnScanClick
-      ExplicitTop = 577
+      ExplicitTop = 388
+    end
+  end
+  object ToolBar1: TToolBar
+    Left = 0
+    Top = 0
+    Width = 784
+    Height = 29
+    ButtonHeight = 23
+    Caption = 'ToolBar1'
+    Images = imgListStatus
+    TabOrder = 2
+    object ToolButton2: TToolButton
+      Left = 0
+      Top = 0
+      Width = 8
+      Caption = 'ToolButton2'
+      ImageIndex = 1
+      Style = tbsSeparator
+    end
+    object cbView: TComboBox
+      Left = 8
+      Top = 0
+      Width = 81
+      Height = 23
+      TabOrder = 0
+      OnChange = cbViewChange
+      Items.Strings = (
+        'All'
+        'Online'
+        'Offline')
     end
   end
   object imgListStatus: TImageList
@@ -375,6 +403,18 @@ object frmNetScan: TfrmNetScan
     end
     object mnuNetScan_View: TMenuItem
       Caption = '&View'
+      object mnuNetScan_View_All: TMenuItem
+        Caption = 'All'
+        OnClick = mnuNetScan_View_AllClick
+      end
+      object mnuNetScan_View_Online: TMenuItem
+        Caption = 'Online'
+        OnClick = mnuNetScan_View_OnlineClick
+      end
+      object mnuNetScan_View_Offline: TMenuItem
+        Caption = 'Offline'
+        OnClick = mnuNetScan_View_OfflineClick
+      end
     end
     object mnuNetScan_About: TMenuItem
       Caption = '&About'
