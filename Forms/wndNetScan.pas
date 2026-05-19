@@ -11,13 +11,11 @@ interface
 
 uses
    Winapi.Windows, Winapi.Messages, Winapi.WinSock2,
-   System.SysUtils, System.Variants, System.Classes, System.Threading, System.SyncObjs,
+   System.SysUtils, System.Variants, System.Classes, System.Threading, System.SyncObjs, System.Generics.Collections,
    Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls, System.ImageList, Vcl.ImgList, Vcl.Menus,
    PercentProgressBar, Vcl.ExtCtrls, Vcl.ToolWin;
 
 type
-   TViewMode = (vmAll, vmOnline, vmOffline);
-
    TScanResult = record
       Status    : string;
       IP        : string;
@@ -26,57 +24,46 @@ type
       ImageIndex: Integer;
    end;
 
+   TParsedRange = record
+      BaseIP: string;
+      MinIP : Integer;
+      MaxIP : Integer;
+      Total : Integer;
+   end;
+
    TfrmNetScan = class(TForm)
       mnuNetScan             : TMainMenu;
       popMnuListView         : TPopupMenu;
       imgListStatus          : TImageList;
       mnuNetScan_File        : TMenuItem;
       mnuNetScan_File_Exit   : TMenuItem;
-      mnuNetScan_View        : TMenuItem;
-      mnuNetScan_View_All    : TMenuItem;
-      mnuNetScan_View_Online : TMenuItem;
-      mnuNetScan_View_Offline: TMenuItem;
       mnuNetScan_About       : TMenuItem;
-      ToolBar1               : TToolBar;
+      ToolBar: TToolBar;
+    toolBtnScan: TToolButton;
+      edIP: TEdit;
+      lvNetScan: TListView;
       ToolButton2: TToolButton;
-      cbView                 : TComboBox;
-      pnlView                : TPanel;
-      pnlOptions             : TPanel;
-      lvNetScan              : TListView;
-      btnScan                : TButton;
-    edByte1: TEdit;
-    edByte2: TEdit;
-    edByte3: TEdit;
-    edByte4: TEdit;
-    edByteTo: TEdit;
-    lblTo: TLabel;
       procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
       procedure FormCreate(Sender: TObject);
       procedure btnScanClick(Sender: TObject);
       procedure mnuNetScan_AboutClick(Sender: TObject);
-      procedure mnuNetScan_View_AllClick(Sender: TObject);
-      procedure mnuNetScan_View_OnlineClick(Sender: TObject);
-      procedure mnuNetScan_View_OfflineClick(Sender: TObject);
-      procedure cbViewChange(Sender: TObject);
+      procedure toolBtnScanClick(Sender: TObject);
       private
-         viewMode   : TViewMode;
          ScanCache  : TArray<TScanResult>;
          itemsMin   : Integer;
          itemsMax   : Integer;
          percent    : Integer;
          isScanning : Boolean;
+         viewOffline: Boolean;
          appExit    : Boolean;
          bkTask     : ITask;
          pbPercent  : TPercentProgressBar;
          procedure AutosizeListViewColumns(lv: TListView);
-         procedure lvNetScanFilterItem(Sender: TObject; Item: TListItem; var IsVisible: Boolean);
-         procedure lvNetScanCompare(Sender: TObject; Item1, Item2: TListItem; Data: Integer; var Compare: Integer);
-         procedure SaveResultsToCache;
-         procedure ApplyFilter;
          function  IPToDWORD(const AIP: string): DWORD;
          function  PingIP(TargetAddr: DWORD): Boolean;
          function  GetHostName(TargetAddr: DWORD): string;
          function  GetMAC(TargetAddr: DWORD): string;
+         function  ParseRangeStr(const RangeStr: string; out RangeResult: TParsedRange): Boolean;
          procedure ScanRange(baseIP: String; minIP, maxIP: Integer);
       public
    end;
@@ -95,6 +82,7 @@ uses
    appData,
    wndAbout;
 
+
 //-------------------------------------------------------------------------------------------------
 // AutosizeListViewColumns
 procedure TfrmNetScan.AutosizeListViewColumns(lv: TListView);
@@ -106,74 +94,6 @@ begin
    finally
       lv.Items.EndUpdate;
    end;
-end;
-
-procedure TfrmNetScan.lvNetScanFilterItem(Sender: TObject; Item: TListItem; var IsVisible: Boolean);
-begin
-   // By default, assume the item should be shown
-   IsVisible:=True;
-
-   case viewMode of
-      vmAll:     IsVisible:=True;
-      vmOnline:  IsVisible:=(Item.Caption = 'Online');
-      vmOffline: IsVisible:=(Item.Caption = 'Offline') or (Item.Caption = 'Pending');
-   end;
-end;
-
-procedure TfrmNetScan.lvNetScanCompare(Sender: TObject; Item1, Item2: TListItem; Data: Integer; var Compare: Integer);
-begin
-   // Instead of sorting alphabetically by Status text ('Online'/'Offline'),
-   // we force it to keep chronological order based on the IP address string (SubItems[0])
-   Compare:=CompareText(Item1.SubItems[0], Item2.SubItems[0]);
-end;
-
-procedure TfrmNetScan.SaveResultsToCache;
-begin
-   // Allocate memory space for the array matching our list item count
-   SetLength(ScanCache, lvNetScan.Items.Count);
-
-   for var i := 0 to lvNetScan.Items.Count - 1 do
-   begin
-      ScanCache[i].Status     := lvNetScan.Items[i].Caption;
-      ScanCache[i].IP         := lvNetScan.Items[i].SubItems[0];
-      ScanCache[i].HostName   := lvNetScan.Items[i].SubItems[1];
-      ScanCache[i].MacAddr    := lvNetScan.Items[i].SubItems[2];
-      ScanCache[i].ImageIndex := lvNetScan.Items[i].ImageIndex;
-   end;
-end;
-
-procedure TfrmNetScan.ApplyFilter;
-begin
-   // Safety check: If the cache hasn't been built yet, don't clear the screen
-   if Length(ScanCache) = 0 then Exit;
-
-   lvNetScan.Items.BeginUpdate;
-   try
-      lvNetScan.Items.Clear;
-
-      for var i := 0 to High(ScanCache) do
-      begin
-         var R := ScanCache[i];
-
-         // Apply filter criteria
-         case viewMode of
-            vmOnline:  if R.Status <> 'Online' then Continue;
-            vmOffline: if (R.Status <> 'Offline') and (R.Status <> 'Pending') then Continue;
-            vmAll:     ; // Show everything
-         end;
-
-         var Item := lvNetScan.Items.Add;
-         Item.Caption := R.Status;
-         Item.SubItems.Add(R.IP);
-         Item.SubItems.Add(R.HostName);
-         Item.SubItems.Add(R.MacAddr);
-         Item.ImageIndex := R.ImageIndex;
-      end;
-   finally
-      lvNetScan.Items.EndUpdate;
-   end;
-
-   AutosizeListViewColumns(lvNetScan);
 end;
 
 //-------------------------------------------------------------------------------------------------
@@ -239,6 +159,33 @@ begin
       Result:=Format('%.2x-%.2x-%.2x-%.2x-%.2x-%.2x', [MacAddr[0], MacAddr[1], MacAddr[2], MacAddr[3], MacAddr[4], MacAddr[5]])
 end;
 
+//-------------------------------------------------------------------------------------------------
+// ParseRange
+function TfrmNetScan.ParseRangeStr(const RangeStr: string; out RangeResult: TParsedRange): Boolean;
+begin
+   Result := False;
+
+   var DashIdx := RangeStr.IndexOf('-');
+   if DashIdx = -1 then Exit;
+
+   var MaxStr := RangeStr.Substring(DashIdx + 1);
+   var LeftStr := RangeStr.Substring(0, DashIdx);
+
+   var LastDotIdx := LeftStr.LastIndexOf('.');
+   if LastDotIdx = -1 then Exit;
+
+   RangeResult.BaseIP := LeftStr.Substring(0, LastDotIdx);
+   var MinStr     := LeftStr.Substring(LastDotIdx + 1);
+
+   RangeResult.MinIP  := StrToIntDef(MinStr, -1);
+   RangeResult.MaxIP  := StrToIntDef(MaxStr, -1);
+
+   if (RangeResult.MinIP <> -1) and (RangeResult.MaxIP <> -1) and (RangeResult.MinIP <= RangeResult.MaxIP) then
+   begin
+      RangeResult.Total := (RangeResult.MaxIP - RangeResult.MinIP) + 1;
+      Result := True;
+   end;
+end;
 
 //-------------------------------------------------------------------------------------------------
 // ScanRange
@@ -250,50 +197,19 @@ begin
    var localBaseIP := baseIP + '.';
    var totalIPs := (maxIP - minIP) + 1;
 
-   isScanning:=True;
-   appExit:=False;
-
-   btnScan.Enabled:=False;
-   mnuNetScan_View.Enabled:=False;
-   cbView.Enabled:=True;
+   isScanning := True;
+   appExit := False;
 
    pbPercent.Min := 0;
    pbPercent.Max := totalIPs;
    pbPercent.Position := 0;
 
-   // 1. PRE-ALLOCATE THE DATA CACHE FIRST (The Threads' Safe Zone)
-   SetLength(ScanCache, totalIPs);
-
-   lvNetScan.Items.BeginUpdate;
-   try
-      lvNetScan.Items.Clear;
-      for var i := itemsMin to itemsMax do
-      begin
-         var idx := i - itemsMin;
-
-         // Set default values inside our stable memory cache
-         ScanCache[idx].Status := 'Pending';
-         ScanCache[idx].IP := localBaseIP + i.ToString;
-         ScanCache[idx].HostName := '';
-         ScanCache[idx].MacAddr := '';
-         ScanCache[idx].ImageIndex := 1;
-
-         // Populate UI initially
-         var item := lvNetScan.Items.Add;
-         item.Caption := ScanCache[idx].Status;
-         item.SubItems.Add(ScanCache[idx].IP);
-         item.SubItems.Add(ScanCache[idx].HostName);
-         item.SubItems.Add(ScanCache[idx].MacAddr);
-         item.ImageIndex := ScanCache[idx].ImageIndex;
-      end;
-   finally
-      lvNetScan.Items.EndUpdate;
-   end;
-   AutosizeListViewColumns(lvNetScan);
+   // 1. Reset UI completely
+   lvNetScan.Items.Clear;
 
    var CompletedCount := 0;
 
-   bkTask := TTask.Run(Procedure
+   bkTask:=TTask.Run(Procedure
    begin
       TParallel.For(itemsMin, itemsMax, Procedure(index: Integer)
       var
@@ -307,75 +223,64 @@ begin
          if appExit then Exit;
 
          CacheIdx := index - itemsMin;
-         CurrentIP := ScanCache[CacheIdx].IP;
-
+         CurrentIP := localBaseIP + index.ToString;
          TargetAddr := IPToDWORD(CurrentIP);
+
          if TargetAddr = INADDR_NONE then Exit;
+
          IsOnline := PingIP(TargetAddr);
 
          if appExit then Exit;
 
+         // Perform heavy lookups only if online
          if IsOnline then
          begin
             HostName := GetHostName(TargetAddr);
             MacAddr := GetMAC(TargetAddr);
-         end
-         else
-         begin
-            HostName := '---';
-            MacAddr := '---';
-         end;
-
-         // 2. WRITE DIRECTLY TO ARRAY MEMORY (Completely safe from visual UI clears!)
-         ScanCache[CacheIdx].HostName := HostName;
-         ScanCache[CacheIdx].MacAddr := MacAddr;
-         if IsOnline then
-         begin
-            ScanCache[CacheIdx].Status := 'Online';
-            ScanCache[CacheIdx].ImageIndex := 0;
-         end
-         else
-         begin
-            ScanCache[CacheIdx].Status := 'Offline';
-            ScanCache[CacheIdx].ImageIndex := 1;
+            // Update UI only for Online devices
+            TThread.Queue(nil, procedure
+            begin
+               if appExit then Exit;
+               var Item := lvNetScan.Items.Add;
+               Item.Caption := 'Online';
+               Item.SubItems.Add(CurrentIP);
+               Item.SubItems.Add(HostName);
+               Item.SubItems.Add(MacAddr);
+               Item.ImageIndex := 0;
+            end);
          end;
 
          var currentProgress := TInterlocked.Increment(CompletedCount);
+         pbPercent.Position:=currentProgress;
 
+         // Cleanup block when entire scan completes
          TThread.Queue(nil, procedure
          begin
-            if appExit then Exit;
-
-            pbPercent.Position := currentProgress;
-
-            // Update live UI only if the item is still present on screen
-            if (CacheIdx >= 0) and (CacheIdx < lvNetScan.Items.Count) then
+            isScanning := False;
+            if not appExit then
             begin
-               var Item:= lvNetScan.Items[CacheIdx];
-               Item.SubItems[1]:=ScanCache[CacheIdx].HostName;
-               Item.SubItems[2]:=ScanCache[CacheIdx].MacAddr;
-               Item.Caption:=ScanCache[CacheIdx].Status;
-               Item.ImageIndex:=ScanCache[CacheIdx].ImageIndex;
+               pbPercent.Position := pbPercent.Max;
+               // Trigger autosize only once, after all results are in
+               AutosizeListViewColumns(lvNetScan);
             end;
          end);
       end);
-
-      // Cleanup block when entire scan completes
-      TThread.Queue(nil, procedure
-      begin
-         isScanning:=False;
-         if Not appExit then
-         begin
-            // 3. Process the filter choice cleanly onto the finished data set
-            ApplyFilter;
-            pbPercent.Position:=pbPercent.Max;
-
-            mnuNetScan_View.Enabled:=False;
-            cbView.Enabled:=True;
-            btnScan.Enabled:=True;
-         end;
-      end);
    end);
+end;
+
+//-------------------------------------------------------------------------------------------------
+// toolBtnScan OnClick
+procedure TfrmNetScan.toolBtnScanClick(Sender: TObject);
+var
+   parsedRange : TParsedRange;
+begin
+   if not ParseRangeStr(edIP.Text, parsedRange) then
+   begin
+      ShowMessage('Invalid range');
+      Exit;
+   end
+   else
+      ScanRange(parsedRange.BaseIP,parsedRange.MinIP,parsedRange.MaxIP);
 end;
 
 //-------------------------------------------------------------------------------------------------
@@ -383,16 +288,15 @@ end;
 procedure TfrmNetScan.FormCreate(Sender: TObject);
 begin
    Self.Caption:=appCaption;
-   viewMode:=vmAll;
-   cbView.ItemIndex:=Ord(viewMode);
+ //  viewOffline:=True;
 
    // initialize PercentProgressBar
    pbPercent:=TPercentProgressBar.Create(Self);
-   pbPercent.Parent:=pnlView;
-   pbPercent.Left:=2;
-   pbPercent.Top:=lvNetScan.Height;
+   pbPercent.Parent:=frmNetScan;
+   pbPercent.Left:=3;
    pbPercent.Height:=18;
-   pbPercent.Width:=lvNetScan.Width-4;
+   pbPercent.Top:=Self.ClientHeight-pbPercent.Height-3;
+   pbPercent.Width:=Self.ClientWidth-6;
    pbPercent.Anchors:=[akLeft, akRight, akBottom];
 end;
 
@@ -407,7 +311,7 @@ begin
       Exit;
    end;
 
-   CanClose:=False; // Stymie the closure for a brief moment
+   CanClose:=False;
    appExit:= True; // Signal all background threads to drop what they are doing
 
    // Wait safely for the outer task to reach a full stop.
@@ -429,41 +333,16 @@ end;
 //-------------------------------------------------------------------------------------------------
 // btnScan onClick
 procedure TfrmNetScan.btnScanClick(Sender: TObject);
+var
+   parsedRange : TParsedRange;
 begin
-   ScanRange(edByte1.Text+'.'+edByte2.Text+'.'+edByte3.Text, StrToInt(edByte4.Text), StrToInt(edByteTO.Text));
-end;
-
-procedure TfrmNetScan.cbViewChange(Sender: TObject);
-begin
-   case cbView.ItemIndex of
-      0: viewMode:=vmAll;
-      1: viewMode:=vmOnline;
-      2: viewMode:=vmOffline;
-   end;
-
-   mnuNetScan_View_All.Checked     := (viewMode = vmAll);
-   mnuNetScan_View_Online.Checked  := (viewMode = vmOnline);
-   mnuNetScan_View_Offline.Checked := (viewMode = vmOffline);
-
-   ApplyFilter;
-end;
-
-procedure TfrmNetScan.mnuNetScan_View_AllClick(Sender: TObject);
-begin
-cbView.ItemIndex := 0;
-   cbViewChange(cbView);
-end;
-
-procedure TfrmNetScan.mnuNetScan_View_OnlineClick(Sender: TObject);
-begin
-cbView.ItemIndex := 1;
-   cbViewChange(cbView);
-end;
-
-procedure TfrmNetScan.mnuNetScan_View_OfflineClick(Sender: TObject);
-begin
-cbView.ItemIndex := 2;
-   cbViewChange(cbView);
+   if not ParseRangeStr(edIP.Text, parsedRange) then
+   begin
+      ShowMessage('Invalid range');
+      Exit;
+   end
+   else
+      ScanRange(parsedRange.BaseIP,parsedRange.MinIP,parsedRange.MaxIP);
 end;
 
 //-------------------------------------------------------------------------------------------------

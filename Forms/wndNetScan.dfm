@@ -2,7 +2,7 @@ object frmNetScan: TfrmNetScan
   Left = 0
   Top = 0
   Caption = 'NetScan'
-  ClientHeight = 421
+  ClientHeight = 457
   ClientWidth = 784
   Color = clBtnFace
   Constraints.MinHeight = 400
@@ -151,148 +151,68 @@ object frmNetScan: TfrmNetScan
   Position = poScreenCenter
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  DesignSize = (
+    784
+    457)
   TextHeight = 15
-  object pnlView: TPanel
-    Left = 0
-    Top = 29
-    Width = 483
-    Height = 392
-    Align = alLeft
-    Caption = 'pnlView'
-    TabOrder = 0
-    ExplicitTop = 40
-    ExplicitHeight = 381
-    DesignSize = (
-      483
-      392)
-    object lvNetScan: TListView
-      Left = 0
-      Top = 0
-      Width = 481
-      Height = 358
-      Anchors = [akLeft, akTop, akRight, akBottom]
-      Columns = <
-        item
-          Caption = 'Status'
-        end
-        item
-          Caption = 'IP'
-          Width = 100
-        end
-        item
-          Caption = 'Hostname'
-          Width = 200
-        end
-        item
-          Caption = 'MAC'
-        end>
-      GridLines = True
-      RowSelect = True
-      SmallImages = imgListStatus
-      TabOrder = 0
-      ViewStyle = vsReport
-    end
-  end
-  object pnlOptions: TPanel
-    Left = 487
-    Top = 29
-    Width = 297
-    Height = 392
-    Align = alRight
-    TabOrder = 1
-    ExplicitTop = 24
-    ExplicitHeight = 397
-    DesignSize = (
-      297
-      392)
-    object lblTo: TLabel
-      Left = 158
-      Top = 9
-      Width = 5
-      Height = 15
-      Caption = '-'
-    end
-    object btnScan: TButton
-      Left = 214
-      Top = 359
-      Width = 75
-      Height = 25
-      Anchors = [akRight, akBottom]
-      Caption = '&Scan'
-      TabOrder = 0
-      OnClick = btnScanClick
-      ExplicitTop = 388
-    end
-    object edByte1: TEdit
-      Left = 2
-      Top = 6
-      Width = 33
-      Height = 23
-      Hint = '192'
-      TabOrder = 1
-    end
-    object edByte2: TEdit
-      Left = 41
-      Top = 6
-      Width = 33
-      Height = 23
-      Hint = '168'
-      TabOrder = 2
-    end
-    object edByte3: TEdit
-      Left = 80
-      Top = 6
-      Width = 33
-      Height = 23
-      Hint = '0'
-      TabOrder = 3
-    end
-    object edByte4: TEdit
-      Left = 119
-      Top = 6
-      Width = 33
-      Height = 23
-      Hint = '1'
-      TabOrder = 4
-    end
-    object edByteTo: TEdit
-      Left = 169
-      Top = 6
-      Width = 33
-      Height = 23
-      Hint = '255'
-      TabOrder = 5
-    end
-  end
-  object ToolBar1: TToolBar
+  object ToolBar: TToolBar
     Left = 0
     Top = 0
     Width = 784
     Height = 29
     ButtonHeight = 23
-    Caption = 'ToolBar1'
+    Caption = 'ToolBar'
     Images = imgListStatus
-    TabOrder = 2
-    object ToolButton2: TToolButton
+    TabOrder = 0
+    object toolBtnScan: TToolButton
       Left = 0
       Top = 0
-      Width = 8
+      Caption = 'Scan'
+      ImageIndex = 0
+      OnClick = toolBtnScanClick
+    end
+    object edIP: TEdit
+      Left = 23
+      Top = 0
+      Width = 103
+      Height = 23
+      Hint = '192'
+      TabOrder = 0
+      Text = '192.168.100.1-255'
+    end
+    object ToolButton2: TToolButton
+      Left = 126
+      Top = 0
       Caption = 'ToolButton2'
       ImageIndex = 1
-      Style = tbsSeparator
     end
-    object cbView: TComboBox
-      Left = 8
-      Top = 0
-      Width = 81
-      Height = 23
-      TabOrder = 0
-      OnChange = cbViewChange
-      Items.Strings = (
-        'All'
-        'Online'
-        'Offline')
-    end
+  end
+  object lvNetScan: TListView
+    Left = 0
+    Top = 29
+    Width = 784
+    Height = 404
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Columns = <
+      item
+        Caption = 'Status'
+      end
+      item
+        Caption = 'IP'
+        Width = 100
+      end
+      item
+        Caption = 'Hostname'
+        Width = 200
+      end
+      item
+        Caption = 'MAC'
+      end>
+    GridLines = True
+    RowSelect = True
+    SmallImages = imgListStatus
+    TabOrder = 1
+    ViewStyle = vsReport
   end
   object imgListStatus: TImageList
     ColorDepth = cd32Bit
@@ -440,27 +360,12 @@ object frmNetScan: TfrmNetScan
       000000000000}
   end
   object mnuNetScan: TMainMenu
-    Left = 32
-    Top = 40
+    Left = 56
+    Top = 120
     object mnuNetScan_File: TMenuItem
       Caption = '&File'
       object mnuNetScan_File_Exit: TMenuItem
         Caption = 'E&xit'
-      end
-    end
-    object mnuNetScan_View: TMenuItem
-      Caption = '&View'
-      object mnuNetScan_View_All: TMenuItem
-        Caption = 'All'
-        OnClick = mnuNetScan_View_AllClick
-      end
-      object mnuNetScan_View_Online: TMenuItem
-        Caption = 'Online'
-        OnClick = mnuNetScan_View_OnlineClick
-      end
-      object mnuNetScan_View_Offline: TMenuItem
-        Caption = 'Offline'
-        OnClick = mnuNetScan_View_OfflineClick
       end
     end
     object mnuNetScan_About: TMenuItem
@@ -469,7 +374,7 @@ object frmNetScan: TfrmNetScan
     end
   end
   object popMnuListView: TPopupMenu
-    Left = 128
-    Top = 40
+    Left = 168
+    Top = 128
   end
 end
