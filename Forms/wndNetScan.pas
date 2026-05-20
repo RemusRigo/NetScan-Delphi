@@ -12,8 +12,10 @@ interface
 uses
    Winapi.Windows, Winapi.Messages, Winapi.WinSock2,
    System.SysUtils, System.Variants, System.Classes, System.Threading, System.SyncObjs, System.Generics.Collections,
-   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls, System.ImageList, Vcl.ImgList, Vcl.Menus,
-   PercentProgressBar, Vcl.ExtCtrls, Vcl.ToolWin;
+   Vcl.Graphics, Vcl.Controls, Vcl.ComCtrls, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Forms, Vcl.Dialogs,
+   System.ImageList, Vcl.ImgList, Vcl.Menus, Vcl.ToolWin,
+   WinSock, StrUtils,
+   PercentProgressBar;
 
 type
    TScanResult = record
@@ -43,11 +45,13 @@ type
       edIP: TEdit;
       lvNetScan: TListView;
       ToolButton2: TToolButton;
+    StatusBar: TStatusBar;
       procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
       procedure FormCreate(Sender: TObject);
       procedure btnScanClick(Sender: TObject);
       procedure mnuNetScan_AboutClick(Sender: TObject);
       procedure toolBtnScanClick(Sender: TObject);
+    procedure ToolButton2Click(Sender: TObject);
       private
          ScanCache  : TArray<TScanResult>;
          itemsMin   : Integer;
@@ -59,9 +63,10 @@ type
          bkTask     : ITask;
          pbPercent  : TPercentProgressBar;
          procedure AutosizeListViewColumns(lv: TListView);
-         function  IPToDWORD(const AIP: string): DWORD;
+         function  IPToDWORD(const IP: string): DWORD;
          function  PingIP(TargetAddr: DWORD): Boolean;
          function  GetHostName(TargetAddr: DWORD): string;
+         function  GetHostNameWSA(TargetAddr: DWORD): string;
          function  GetMAC(TargetAddr: DWORD): string;
          function  ParseRangeStr(const RangeStr: string; out RangeResult: TParsedRange): Boolean;
          procedure ScanRange(baseIP: String; minIP, maxIP: Integer);
@@ -77,7 +82,6 @@ implementation
 {$R *.dfm}
 
 uses
-   StrUtils,
    iphlpapi_dll,
    appData,
    wndAbout;
@@ -98,10 +102,9 @@ end;
 
 //-------------------------------------------------------------------------------------------------
 // IPToDWORD
-function TfrmNetScan.IPToDWORD(const AIP: string): DWORD;
+function TfrmNetScan.IPToDWORD(const IP: string): DWORD;
 begin
-   // All the messy Ansi and Pointer casting is now neatly quarantined here!
-   Result := inet_addr(PAnsiChar(AnsiString(AIP)));
+   Result:=inet_addr(PAnsiChar(AnsiString(IP)));
 end;
 
 //-------------------------------------------------------------------------------------------------
@@ -133,16 +136,45 @@ begin
 end;
 
 //-------------------------------------------------------------------------------------------------
-// GetHostName (Optimized)
+// GetHostName
 function TfrmNetScan.GetHostName(TargetAddr: DWORD): string;
 var
-   HostEnt: PHostEnt;
+   hostEnt: PHostEnt;
+   WSAData: TWSAData;
+begin
+   Result:='Unknown';
+   hostEnt:=GetHostByAddr(@TargetAddr, SizeOf(TargetAddr), AF_INET);
+   if Assigned(hostEnt) then
+      Result:=string(AnsiString(hostEnt^.h_name));
+end;
+
+//-------------------------------------------------------------------------------------------------
+// GetHostNameWSA (Windows Sockets API)
+function TfrmNetScan.GetHostNameWSA(TargetAddr: DWORD): string;
+var
+   hostEnt: PHostEnt;
+   WSAData: TWSAData;
 begin
    Result:='Unknown';
 
-   HostEnt:=GetHostByAddr(@TargetAddr, SizeOf(TargetAddr), AF_INET);
-   if Assigned(HostEnt) then
-      Result:=string(AnsiString(HostEnt^.h_name));
+   if WSAStartup(MAKEWORD(2, 2), WSAData) <> 0 then
+      Exit;
+
+   try
+      if TargetAddr <> INADDR_NONE then
+      begin
+         // Perform reverse DNS lookup (equivalent to Dns.GetHostEntry)
+         hostEnt:=gethostbyaddr(@TargetAddr, SizeOf(TargetAddr), AF_INET);
+         if Assigned(hostEnt) then
+            Result := string(AnsiString(hostEnt^.h_name))
+         else
+           Result:='Unknown (Error: ' + IntToStr(WSAGetLastError) + ')';
+      end
+      else
+         Result := 'Unknown (Invalid IP address)';
+   finally
+      WSACleanup;
+   end;
 end;
 
 //-------------------------------------------------------------------------------------------------
@@ -153,7 +185,7 @@ var
    macLen : DWORD;
 begin
    Result:='Unknown';
-   MacLen:=SizeOf(MacAddr);
+   macLen:=SizeOf(MacAddr);
 
    if SendARP(TargetAddr, 0, @macAddr[0], macLen) = 0 then
       Result:=Format('%.2x-%.2x-%.2x-%.2x-%.2x-%.2x', [MacAddr[0], MacAddr[1], MacAddr[2], MacAddr[3], MacAddr[4], MacAddr[5]])
@@ -191,20 +223,19 @@ end;
 // ScanRange
 procedure TfrmNetScan.ScanRange(baseIP: String; minIP, maxIP: Integer);
 begin
-   itemsMin := minIP;
-   itemsMax := maxIP;
+   itemsMin:=minIP;
+   itemsMax:=maxIP;
 
-   var localBaseIP := baseIP + '.';
-   var totalIPs := (maxIP - minIP) + 1;
+   var localBaseIP:=baseIP + '.';
+   var totalIPs:=(maxIP - minIP) + 1;
 
-   isScanning := True;
-   appExit := False;
+   isScanning:=True;
+   appExit:=False;
 
-   pbPercent.Min := 0;
-   pbPercent.Max := totalIPs;
-   pbPercent.Position := 0;
+   pbPercent.Min:=0;
+   pbPercent.Max:=totalIPs;
+   pbPercent.Position:= 0;
 
-   // 1. Reset UI completely
    lvNetScan.Items.Clear;
 
    var CompletedCount := 0;
@@ -222,46 +253,47 @@ begin
       begin
          if appExit then Exit;
 
-         CacheIdx := index - itemsMin;
-         CurrentIP := localBaseIP + index.ToString;
-         TargetAddr := IPToDWORD(CurrentIP);
+         CacheIdx:=index - itemsMin;
+         CurrentIP:=localBaseIP + index.ToString;
+         TargetAddr:=IPToDWORD(CurrentIP);
 
          if TargetAddr = INADDR_NONE then Exit;
 
-         IsOnline := PingIP(TargetAddr);
+         IsOnline:=PingIP(TargetAddr);
 
          if appExit then Exit;
 
-         // Perform heavy lookups only if online
-         if IsOnline then
+         TThread.Queue(nil, procedure
          begin
-            HostName := GetHostName(TargetAddr);
-            MacAddr := GetMAC(TargetAddr);
-            // Update UI only for Online devices
-            TThread.Queue(nil, procedure
+            if IsOnline then
             begin
-               if appExit then Exit;
-               var Item := lvNetScan.Items.Add;
-               Item.Caption := 'Online';
-               Item.SubItems.Add(CurrentIP);
-               Item.SubItems.Add(HostName);
-               Item.SubItems.Add(MacAddr);
-               Item.ImageIndex := 0;
-            end);
-         end;
+               HostName:=GetHostName(TargetAddr);
+               MacAddr:=GetMAC(TargetAddr);
 
-         var currentProgress := TInterlocked.Increment(CompletedCount);
+               if appExit then Exit;
+
+               var item:=lvNetScan.Items.Add;
+               item.Caption:='Online';
+               item.SubItems.Add(CurrentIP);
+               item.SubItems.Add(HostName);
+               item.SubItems.Add(MacAddr);
+               item.ImageIndex := 0;
+            end;
+            StatusBar.SimpleText:=CurrentIP;
+         end);
+
+         var currentProgress:=TInterlocked.Increment(CompletedCount);
          pbPercent.Position:=currentProgress;
 
          // Cleanup block when entire scan completes
          TThread.Queue(nil, procedure
          begin
-            isScanning := False;
+            isScanning:=False;
             if not appExit then
             begin
-               pbPercent.Position := pbPercent.Max;
-               // Trigger autosize only once, after all results are in
+               pbPercent.Position:=pbPercent.Max;
                AutosizeListViewColumns(lvNetScan);
+//               StatusBar.SimpleText:='Scan complete';
             end;
          end);
       end);
@@ -283,6 +315,11 @@ begin
       ScanRange(parsedRange.BaseIP,parsedRange.MinIP,parsedRange.MaxIP);
 end;
 
+procedure TfrmNetScan.ToolButton2Click(Sender: TObject);
+begin
+
+end;
+
 //-------------------------------------------------------------------------------------------------
 // frmNetScan onCreate
 procedure TfrmNetScan.FormCreate(Sender: TObject);
@@ -295,7 +332,7 @@ begin
    pbPercent.Parent:=frmNetScan;
    pbPercent.Left:=3;
    pbPercent.Height:=18;
-   pbPercent.Top:=Self.ClientHeight-pbPercent.Height-3;
+   pbPercent.Top:=Self.ClientHeight-pbPercent.Height-StatusBar.Height-3;
    pbPercent.Width:=Self.ClientWidth-6;
    pbPercent.Anchors:=[akLeft, akRight, akBottom];
 end;

@@ -25,7 +25,8 @@ Just run NetScan.exe
 
 ## Statistics
 
-!\[GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
+
 
 
 
@@ -35,6 +36,10 @@ Just run NetScan.exe
 
 ## Roadmap
 
+* 2026-05-20: Add: new method to get hostname by IP using Windows Sockets API
+* 2026-05-19: Change: Show only Online IP's (faster process)
+* 2026-05-19: Change: Redesign UI, scan single range
+* 2026-05-18: Add: Scan multiple ranges (test NOK, rethink logic)
 * 2026-05-17: Add: Select IP range to scan
 * 2026-05-17: Add: Filter for Online/Offline devices
 * 2026-05-17: Add: Retrieve HostName and MAC for the active IP's

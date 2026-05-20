@@ -185,13 +185,14 @@ object frmNetScan: TfrmNetScan
       Top = 0
       Caption = 'ToolButton2'
       ImageIndex = 1
+      OnClick = ToolButton2Click
     end
   end
   object lvNetScan: TListView
     Left = 0
     Top = 29
     Width = 784
-    Height = 404
+    Height = 384
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
@@ -213,6 +214,17 @@ object frmNetScan: TfrmNetScan
     SmallImages = imgListStatus
     TabOrder = 1
     ViewStyle = vsReport
+  end
+  object StatusBar: TStatusBar
+    Left = 0
+    Top = 438
+    Width = 784
+    Height = 19
+    Panels = <>
+    SimplePanel = True
+    ExplicitLeft = 128
+    ExplicitTop = 456
+    ExplicitWidth = 0
   end
   object imgListStatus: TImageList
     ColorDepth = cd32Bit
