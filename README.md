@@ -25,7 +25,7 @@ Just run NetScan.exe
 
 ## Statistics
 
-!\[GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
 
 
 
