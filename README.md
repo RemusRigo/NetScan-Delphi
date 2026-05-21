@@ -25,17 +25,18 @@ Just run NetScan.exe
 
 ## Statistics
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
-
-
-
-
-
+!\[GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
 
 
 
 ## Roadmap
 
+* 2026-05-21: Add: Get local IP and create default range from it
+* 2026-05-21: ICO: [Radar dish](https://icon-icons.com/icon/radar-dish/38149) by [Lorc, Delapouite & contributors](https://icon-icons.com/authors/167-lorc-delapouite-contributors)
+* 2026-05-21: PNG: [Glass free icon](https://www.flaticon.com/free-icon/glass_15781662)
+* 2026-05-21: PNG: [Play free icon](https://www.flaticon.com/free-icon/play_15781352)
+* 2026-05-21: PNG: [Home free icon](https://www.flaticon.com/free-icon/home_15781669)
+* 2026-05-21: PNG: [Web free icon](https://www.flaticon.com/free-icon/web_15781502)
 * 2026-05-20: Add: new method to get hostname by IP using Windows Sockets API
 * 2026-05-19: Change: Show only Online IP's (faster process)
 * 2026-05-19: Change: Redesign UI, scan single range

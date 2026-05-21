@@ -46,6 +46,8 @@ type
       lvNetScan: TListView;
       ToolButton2: TToolButton;
     StatusBar: TStatusBar;
+    imgListButtons: TImageList;
+    ToolButton1: TToolButton;
       procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
       procedure FormCreate(Sender: TObject);
       procedure btnScanClick(Sender: TObject);
@@ -63,11 +65,13 @@ type
          bkTask     : ITask;
          pbPercent  : TPercentProgressBar;
          procedure AutosizeListViewColumns(lv: TListView);
+         function  GetIPFromHost: String;
+         function  IPToRange(const IP: string): string;
          function  IPToDWORD(const IP: string): DWORD;
          function  PingIP(TargetAddr: DWORD): Boolean;
-         function  GetHostName(TargetAddr: DWORD): string;
-         function  GetHostNameWSA(TargetAddr: DWORD): string;
-         function  GetMAC(TargetAddr: DWORD): string;
+         function  Get_HostName(TargetAddr: DWORD): string;
+         function  Get_HostNameWSA(TargetAddr: DWORD): string;
+         function  Get_MAC(TargetAddr: DWORD): string;
          function  ParseRangeStr(const RangeStr: string; out RangeResult: TParsedRange): Boolean;
          procedure ScanRange(baseIP: String; minIP, maxIP: Integer);
       public
@@ -98,6 +102,45 @@ begin
    finally
       lv.Items.EndUpdate;
    end;
+end;
+
+//-------------------------------------------------------------------------------------------------
+// Get local IP
+function TfrmNetScan.GetIPFromHost : string;
+var
+  HEnt: pHostEnt;
+  HostName: array[0..255] of AnsiChar;
+  WSAData: TWSAData;
+begin
+   if WSAStartup($0101, WSAData) <> 0 then
+   begin
+      Result:='Unknown (Winsock is not responding)';
+      Exit;
+   end;
+
+   if GetHostName(HostName, SizeOf(HostName)) = 0 then
+   begin
+      HEnt := GetHostByName(HostName);
+      if Assigned(HEnt) and (HEnt.h_addr_list <> nil) then
+        Result := string(inet_ntoa(PInAddr(HEnt.h_addr_list^)^));
+   end;
+
+   WSACleanup;
+end;
+
+//-------------------------------------------------------------------------------------------------
+// IP to Range
+function TfrmNetScan.IPToRange(const IP: string): string;
+var
+  LastDotPos: Integer;
+begin
+   // Find the position of the last dot (e.g., in 192.168.0.50)
+   LastDotPos:=LastDelimiter('.', IP);
+
+   if LastDotPos > 0 then
+      Result:=Copy(IP, 1, LastDotPos) + '1-255' // Take everything up to the last dot and append the range
+   else
+      Result:=IP; // Fallback if the input is not a valid-looking IP
 end;
 
 //-------------------------------------------------------------------------------------------------
@@ -137,7 +180,7 @@ end;
 
 //-------------------------------------------------------------------------------------------------
 // GetHostName
-function TfrmNetScan.GetHostName(TargetAddr: DWORD): string;
+function TfrmNetScan.Get_HostName(TargetAddr: DWORD): string;
 var
    hostEnt: PHostEnt;
    WSAData: TWSAData;
@@ -150,7 +193,7 @@ end;
 
 //-------------------------------------------------------------------------------------------------
 // GetHostNameWSA (Windows Sockets API)
-function TfrmNetScan.GetHostNameWSA(TargetAddr: DWORD): string;
+function TfrmNetScan.Get_HostNameWSA(TargetAddr: DWORD): string;
 var
    hostEnt: PHostEnt;
    WSAData: TWSAData;
@@ -179,7 +222,7 @@ end;
 
 //-------------------------------------------------------------------------------------------------
 // GetMAC
-function TfrmNetScan.GetMAC(TargetAddr: DWORD): string;
+function TfrmNetScan.Get_MAC(TargetAddr: DWORD): string;
 var
    macAddr: array[0..5] of Byte;
    macLen : DWORD;
@@ -267,8 +310,8 @@ begin
          begin
             if IsOnline then
             begin
-               HostName:=GetHostName(TargetAddr);
-               MacAddr:=GetMAC(TargetAddr);
+               HostName:=Get_HostName(TargetAddr);
+               MacAddr:=Get_MAC(TargetAddr);
 
                if appExit then Exit;
 
@@ -305,6 +348,7 @@ end;
 procedure TfrmNetScan.toolBtnScanClick(Sender: TObject);
 var
    parsedRange : TParsedRange;
+   sIP: String;
 begin
    if not ParseRangeStr(edIP.Text, parsedRange) then
    begin
@@ -313,6 +357,8 @@ begin
    end
    else
       ScanRange(parsedRange.BaseIP,parsedRange.MinIP,parsedRange.MaxIP);
+
+
 end;
 
 procedure TfrmNetScan.ToolButton2Click(Sender: TObject);
@@ -324,6 +370,8 @@ end;
 // frmNetScan onCreate
 procedure TfrmNetScan.FormCreate(Sender: TObject);
 begin
+   edIP.Text:=IPToRange(GetIPFromHost);
+
    Self.Caption:=appCaption;
  //  viewOffline:=True;
 
