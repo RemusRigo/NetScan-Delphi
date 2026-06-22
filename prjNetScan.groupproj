@@ -3,7 +3,7 @@
         <ProjectGuid>{E8368100-38F5-41E0-B200-8C31E9D5DC76}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="NetScan.dproj">
+        <Projects Include="NetScan\NetScan.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -15,13 +15,13 @@
         </BorlandProject>
     </ProjectExtensions>
     <Target Name="NetScan">
-        <MSBuild Projects="NetScan.dproj"/>
+        <MSBuild Projects="NetScan\NetScan.dproj"/>
     </Target>
     <Target Name="NetScan:Clean">
-        <MSBuild Projects="NetScan.dproj" Targets="Clean"/>
+        <MSBuild Projects="NetScan\NetScan.dproj" Targets="Clean"/>
     </Target>
     <Target Name="NetScan:Make">
-        <MSBuild Projects="NetScan.dproj" Targets="Make"/>
+        <MSBuild Projects="NetScan\NetScan.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
         <CallTarget Targets="NetScan"/>

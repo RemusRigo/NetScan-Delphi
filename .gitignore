@@ -1,18 +1,34 @@
 #------------------------------------------------
 # © 2026 Remus Rigo
-#    2026-05-16
+#    2026-06-18
 #------------------------------------------------
 
-#My ignored files
-~Backup~
-~ToDo~
-ToDo.txt
-Upload.bat
-Upload.ps1
-Update.bat
+#------------------------------------------------
+# My ignored files
+#
+[Ss]ync.*
 *.psd
 
-#Delphi specific files & folders
+#------------------------------------------------
+# Common ignored files
+*.bak
+*.log
+*.tmp
+
+#------------------------------------------------
+# Common compiler ignored files
+[Bb]in
+[Oo]bj
+
+#------------------------------------------------
+# Windows ignored files
+#
+[Dd]esktop.ini
+[Tt]humbs.db
+
+#------------------------------------------------
+# Delphi ignored files
+#
 [Bb]in
 [Oo]bj
 __history
@@ -23,3 +39,15 @@ __recovery
 *.groupproj.local
 *.identcache
 *.tvsconfig
+
+#------------------------------------------------
+# Lazarus
+#
+*.lps
+
+#------------------------------------------------
+# Visual Studio
+#
+.vs/
+[Bb]in
+[Oo]bj

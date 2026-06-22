@@ -25,6 +25,8 @@ Just run NetScan.exe
 
 ## Statistics
 
+![status](https://img.shields.io/badge/status-on%20hold-yellow)
+<br>
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
 
 
