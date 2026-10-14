@@ -1,32 +1,37 @@
 # NetScan
-
-A IP/Network Scanner utility
-
+NetScan: an IP/network scanner utility
 
 
-## Authors
+
+## Author
 
 * [@remusrigo](https://github.com/RemusRigo)
 * [@remusrigo](https://sourceforge.net/u/remusrigo/profile)
 
 
 
-## Installation
-
-Just run NetScan.exe
-
-
-
 ## Features
 
-* 
+* Gets the local IP and creates the default range from it (e.g. `192.168.1.1-255`)
+* Scans an IP range in parallel (ICMP ping)
+* Shows only the online IP's, with Status, Hostname and MAC address
+* Progress bar with percent
+* Native Win32/Win64 app: no runtime needed
+
+
+
+## User's Guide
+
+See the [User's Guide](UsersGuide.md) for downloads, installation and usage.
 
 
 
 ## Statistics
 
-![status](https://img.shields.io/badge/status-on%20hold-yellow)
+![Pascal](https://img.shields.io/badge/Language-Pascal-blue)
+![IDE](https://img.shields.io/badge/IDE-Delphi%20RAD%20Studio-purple)
 <br>
+![status](https://img.shields.io/badge/status-on%20hold-yellow) 
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/RemusRigo/NetScan-Delphi/total)
 
 
@@ -49,4 +54,3 @@ Just run NetScan.exe
 * 2026-05-16: Fix: About form
 * 2026-05-16: Add: Online/Offline buttons
 * 2026-05-16: Project started \[Delphi version]
-
